@@ -1,0 +1,197 @@
+---
+title: 'Analysis of Diabetes Dataset'
+author: "Gabriella Khalil"
+date: " "
+output:
+  html_document: 
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+    number_sections: no
+    toc_collapsed: yes
+    code_folding: hide
+    code_download: yes
+    smooth_scroll: yes
+    theme: lumen
+  word_document: 
+    toc: yes
+    toc_depth: 4
+    fig_caption: yes
+    keep_md: yes
+  pdf_document: 
+    toc: yes
+    toc_depth: 4
+    fig_caption: yes
+    number_sections: no
+    fig_width: 3
+    fig_height: 3
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{=html}
+
+<style type="text/css">
+
+/* Cascading Style Sheets (CSS) is a stylesheet language used to describe the presentation of a document written in HTML or XML. it is a simple mechanism for adding style (e.g., fonts, colors, spacing) to Web documents. */
+
+h1.title {  /* Title - font specifications of the report title */
+  font-size: 22px;
+  font-weight: bold;
+  color: DarkRed;
+  text-align: center;
+  font-family: "Gill Sans", sans-serif;
+}
+h4.author { /* Header 4 - font specifications for authors  */
+  font-size: 18px;
+  font-weight: bold;
+  font-family: system-ui;
+  color: navy;
+  text-align: center;
+}
+h4.date { /* Header 4 - font specifications for the date  */
+  font-size: 18px;
+  font-family: system-ui;
+  color: DarkBlue;
+  text-align: center;
+  font-weight: bold;
+}
+h1 { /* Header 1 - font specifications for level 1 section title  */
+    font-size: 22px;
+    font-family: "Times New Roman", Times, serif;
+    color: navy;
+    text-align: center;
+    font-weight: bold;
+}
+h2 { /* Header 2 - font specifications for level 2 section title */
+    font-size: 20px;
+    font-family: "Times New Roman", Times, serif;
+    color: navy;
+    text-align: left;
+    font-weight: bold;
+}
+
+h3 { /* Header 3 - font specifications of level 3 section title  */
+    font-size: 18px;
+    font-family: "Times New Roman", Times, serif;
+    color: navy;
+    text-align: left;
+}
+
+h4 { /* Header 4 - font specifications of level 4 section title  */
+    font-size: 18px;
+    font-family: "Times New Roman", Times, serif;
+    color: darkred;
+    text-align: left;
+}
+
+body { background-color:white; }
+
+.highlightme { background-color:yellow; }
+
+p { background-color:white; }
+
+</style>
+```
+
+```{r setup, include=FALSE}
+# code chunk specifies whether the R code, warnings, and output 
+# will be included in the output files.
+if (!require("knitr")) {
+   install.packages("knitr")
+   library(knitr)
+}
+if (!require("tidyverse")) {
+   install.packages("tidyverse")
+library(tidyverse)
+}
+if (!require("GGally")) {
+   install.packages("GGally")
+library(GGally)
+}
+knitr::opts_chunk$set(echo = TRUE,   # include code chunk in the output file
+                      warning = FALSE,# sometimes, you code may produce warning messages,
+                                      # you can choose to include the warning messages in
+                                      # the output file. 
+                      results = TRUE, # you can also decide whether to include the output
+                                      # in the output file.
+                      message = FALSE,
+                      comment = NA
+                      )  
+```
+## Overview
+
+The purpose of this dataset was to help find predictors of diabetes. The goal is to help medical professionals identify patients with potential risk factors of diabetes.The dataset contains information on patient demographics such as age and gender, as well as medical information including blood glucose levels and hypertension. The observations in this dataset were obtained from research studies and healthcare institutions. The dataset was obtained via Kaggle. 
+
+Mustafa, T. Z. (2021). *Diabetes Prediction Dataset*. Kaggle. https://www.kaggle.com/datasets/iammustafatz/diabetes-prediction-dataset
+
+
+```{r setup5, include=TRUE}
+knitr::opts_chunk$set(echo =TRUE )
+
+data <- read.csv(file= 'https://raw.githubusercontent.com/GabbyK8/Datasets/refs/heads/main/diabetes_prediction_dataset.csv')
+
+str(data)
+
+
+data$diabetes <- recode(data$diabetes, "1"="Yes", "0"="No")
+data$hypertension <- recode(data$hypertension, "1"="Yes", "0"="No")
+
+ggplot(data, aes(x = hypertension, fill = diabetes)) +
+  geom_bar(position = "dodge") + # Use "stack" for a stacked bar chart
+  labs (title="Risk of Diabetes by Hypertension", x="Hypertension", y= "Frequency",
+        fill= "Diabetes")
+
+```
+
+**Comparison of Two Categorical Variables**
+
+The purpose of this graph is to show the relationship between having hypertension and diabetes. For this graph, I changed the values of 1 in both the diabetes and hypertension variable to "Yes" and the value 0 to "No." These integers were meant to represent categorical variables with 1 correlating to being positive for hypertension or diabetes and 0 correlating to being negative to hypertension or diabetes. Based on our graph, we can see that there is no correlation between having diabetes and having hypertension, with most patients within our sample having neither diabetes or hypertension. Thus, hypertension would not be a good predictor of diabetes within patients.
+```{r setup2, include=TRUE}
+knitr::opts_chunk$set(echo =TRUE )
+library(ggplot2)
+library(plotly)
+interact = ggplot(data, aes(x =blood_glucose_level , y = HbA1c_level, group = diabetes, color = diabetes)) +
+  geom_line(size = 1) +  # Lines representing interaction
+  geom_point(size = 2) + # Points for data
+  labs(
+    title = "Interaction of Blood Glucose and HbA1c Levels",
+    x = "Blood Glucose Level",
+    y = "HbA1c Level",
+    color = "Presence of Diabetes"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
+    axis.text = element_text(size = 12),
+    legend.position = "top"
+  )
+ggplotly(interact)
+```
+**Comparison of Two Numerical Variables**
+
+The two variables being compared here are Blood Glucose Level and HbA1c Level. HbA1cc is a shortened term for hemoglobin A1c. Hb1Ac level is a measure of average blood sugar levels over 2-3 months and is measured in %. Blood glucose level is the amount of blood sugar in a patients blood at a given time. Our plot shows a correlation between high levels in HbA1c and blood glucose levels and it's relationship with diabetes. This plot suggests patients with high levels of HbA1c and blood glucose levels are at high risk for diabetes.
+
+```{r setup3, include=TRUE}
+knitr::opts_chunk$set(echo = TRUE)
+
+ boxplot(data$age ~ data$diabetes,
+         xlab="Patient Age",
+         ylab="Presence of Diabetes",
+         col = c("skyblue", "purple"),
+         main="Visualization of Diabetes by Age",
+         cex.main = 1.1,
+         col.main = "navy")
+```
+
+**Comparison of a Numerical and Categorical Variable**
+
+This chart shows the relationship between age and diabetes diagnosis. This chart shows that as patients grow older they are at higher risk for diabetes. This would make age a predictor for diabetes, with the average age for those without diabetes being 40 years and 60 years for those with diabetes. However, we can see that we do have a few outliers for those with diabetes with some patients being diagnosed at 20 or younger. This could be from the population of people with Type I diabetes which is usually diagnosed in patients under 20. Our dataset does not distinguish between type I and type II diabetes.
+
+
+**Conclusion**
+
+Diabetes can be predicted using age, blood glucose levels, and HbA1c levels in patients. However, our results showed hypertension is not a good predictor of diabetes. Based on our findings, it would be interesting to look at factors that occur once a patient becomes older that could lead to diabetes at an older age. As well, diet could be another factor to look into, such as grams of sugar consumed on a daily or weekly basis, to see if sugar consumption can predict diabetes. Another important thing to analyze in future studies would be Type I versus Type II diabetes, as it could be the reason for some of the outliers in the boxplot. 
+
+
+
