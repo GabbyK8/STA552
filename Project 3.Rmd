@@ -1,0 +1,379 @@
+---
+title: "Project 3"
+author: "Gabriella Khalil"
+date: "2025-04-29"
+output:
+
+  html_document: 
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+    number_sections: no
+    toc_collapsed: yes
+    code_folding: hide
+    code_download: yes
+    smooth_scroll: yes
+    theme: lumen
+  word_document: 
+    toc: yes
+    toc_depth: 4
+    fig_caption: yes
+    keep_md: yes
+  pdf_document: 
+    toc: yes
+    toc_depth: 4
+    fig_caption: yes
+    number_sections: no
+    fig_width: 3
+    fig_height: 3
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{=html}
+
+<style type="text/css">
+
+/* Cascading Style Sheets (CSS) is a stylesheet language used to describe the presentation of a document written in HTML or XML. it is a simple mechanism for adding style (e.g., fonts, colors, spacing) to Web documents. */
+
+h1.title {  /* Title - font specifications of the report title */
+  font-size: 22px;
+  font-weight: bold;
+  color: DarkRed;
+  text-align: center;
+  font-family: "Gill Sans", sans-serif;
+}
+h4.author { /* Header 4 - font specifications for authors  */
+  font-size: 18px;
+  font-weight: bold;
+  font-family: system-ui;
+  color: navy;
+  text-align: center;
+}
+h4.date { /* Header 4 - font specifications for the date  */
+  font-size: 18px;
+  font-family: system-ui;
+  color: DarkBlue;
+  text-align: center;
+  font-weight: bold;
+}
+h1 { /* Header 1 - font specifications for level 1 section title  */
+    font-size: 22px;
+    font-family: "Times New Roman", Times, serif;
+    color: navy;
+    text-align: center;
+    font-weight: bold;
+}
+h2 { /* Header 2 - font specifications for level 2 section title */
+    font-size: 20px;
+    font-family: "Times New Roman", Times, serif;
+    color: navy;
+    text-align: left;
+    font-weight: bold;
+}
+
+h3 { /* Header 3 - font specifications of level 3 section title  */
+    font-size: 18px;
+    font-family: "Times New Roman", Times, serif;
+    color: navy;
+    text-align: left;
+}
+
+h4 { /* Header 4 - font specifications of level 4 section title  */
+    font-size: 18px;
+    font-family: "Times New Roman", Times, serif;
+    color: darkred;
+    text-align: left;
+}
+
+body { background-color:white; }
+
+.highlightme { background-color:yellow; }
+
+p { background-color:white; }
+
+</style>
+```
+
+```{r setup, include=FALSE}
+# code chunk specifies whether the R code, warnings, and output 
+# will be included in the output files.
+if (!require("knitr")) {
+   install.packages("knitr")
+   library(knitr)
+}
+if (!require("tidyverse")) {
+   install.packages("tidyverse")
+library(tidyverse)
+}
+if (!require("GGally")) {
+   install.packages("GGally")
+library(GGally)
+}
+
+library(ggplot2)
+library(plotly)
+library(cowplot)
+library(pander)
+# Load necessary libraries
+library(rpart)        # For decision trees
+library(rpart.plot)   # For visualizing trees
+library(caret)        # For model evaluation
+library(pROC)         # For ROC analysis
+
+knitr::opts_chunk$set(echo = TRUE,   # include code chunk in the output file
+                      warning = FALSE,# sometimes, you code may produce warning messages,
+                                      # you can choose to include the warning messages in
+                                      # the output file. 
+                      results = TRUE, # you can also decide whether to include the output
+                                      # in the output file.
+                      message = FALSE,
+                      comment = NA
+                      )  
+
+```
+# Analysis of Lung Cancer Data using CART Regression
+
+## Data Overview
+
+Lung cancer is a serious disease that can lead to other health conditions and death.The purpose of this dataset is to find potential predictors of lung cancer. By identifying these risk factors, doctors and patients can help identify high risk patients and catch cancer early on. The response variable to be used in this analysis is, **Lung Cancer**.
+
+Predictor variables featured in this analysis are:
+
+-   **Gender** - Indicated as M for male and F for female
+-   **Age** Age of patient
+
+The remaining predictor variables are factored as 1 for NO and 2 for YES. These variables are **Coughing**,**Shortness of Breath**, **Smoking**, **Yellow Fingers**, **Anxiety**, **Peer Pressure**, **Chronic Disease**, **Fatigue**, **Allergy**, **Wheezing**, **Alcohol Consuming**, **Swallowing Difficulty**, and **Chest Pain**.
+The data was obtained using Kaggle. It has 16 variable columns and 309 observations.
+
+## Abstract
+
+This analysis will use CART classification to find significant predictors of the target variable, lung cancer. The CART classification analysis found that the key factors in predicting lung cancer were difficulty swallowing, yellow fingers, wheezing, alcohol consumption, and allergy. However, for this analysis logistic regression performed better than the two CART classification methods. Meaning for this analysis, it would have been more efficient to run logistic regression to find the best fit model to predict lung cancer. Based on the findings, from CART classification difficulty swallowing is key predictor in determining lung cancer and individuals who experience this symptom, should have regular screenings with their doctor. As well, other key predictors are allergy, alcohol consumption, and wheezing. These symptoms should also be discussed with an individual's doctor and may be a precursor to or sign that an individual has lung cancer.
+
+## Introduction
+
+This analysis seeks to answer the question of 'What key factors can predict lung cancer?' This analysis can help individuals obtain early treatment for lung cancer or allow an individual to take preventative steps against lung cancer. Some limitations of the analysis are most variables have been answered with a "yes" or "no", which does not give us the complete story. For instance, smoking is answered with a "yes" or "no" which does not let us analyze how smoking over a period of time can lead to lung cancer.
+
+```{r}
+data <- read.csv('https://raw.githubusercontent.com/GabbyK8/Datasets/refs/heads/main/survey%20lung%20cancer.csv')
+
+
+```
+
+## Exploratory Data Analysis
+
+```{r fig.align='center', fig.width=7, fig.height=5, fig.cap='This figure shows the relationship between difficulty swallowing and lung cancer. Based on the graph, there are more people with lung cancer that smoke than for those who do not smoke. Meaning there is a possible relationship between difficulty swallowing and being diagnosed with lung cancer.' }
+
+ ggplot(data, aes(x = SWALLOWING.DIFFICULTY, fill= LUNG_CANCER )) +
+  geom_bar(position = "dodge") +
+  labs(
+    x = "Difficulty Swallowing",
+    y = "Proportion",
+    fill = "Lung Cancer",
+    title = "Prevelance of Lung Cancer Related to Difficulty Swallowing"
+  ) +
+  theme_minimal()
+
+```
+
+```{r fig.align='center', fig.width=7, fig.height=5, fig.cap='The boxplot shows the relationship between age and lung cancer. It shows that most people who are diagnosed with lung cancer are older. Suggesting a correlation between age and lung cancer diagnosis.'}
+ggplot(data, aes(x = LUNG_CANCER, y = AGE)) +
+  geom_boxplot(fill = "skyblue") +
+  labs(x = "Category", y = "Value", title = "Lung Cancer by Age")
+
+
+
+
+```
+
+## CART Classification
+
+The outcome variable is a binary variable, so this analysis will rely on CART Classification to help predict the categorical target variable. 
+```{r}
+
+
+
+
+
+# Split data into training (70%) and test (30%) sets
+set.seed(123)
+train.index <- createDataPartition(data$LUNG_CANCER, p = 0.7, list = FALSE)
+train.data <- data[train.index, ]
+test.data <- data[-train.index, ]
+
+# Build the initial classification tree
+tree.model <- rpart(LUNG_CANCER ~ ., 
+                    data = train.data,
+                    method = "class",   # classification tree
+                    parms = list(split = "gini",  # Using Gini index
+                                 #FNcost = 1, FPcost = 0.5,
+                                 loss = matrix(c(0, 0.5, 1, 0), nrow = 2)  
+                                 ),
+                    control = rpart.control(minsplit = 15,  # Min 15 obs to split
+                                           minbucket = 5,   # Min 7 obs in leaf
+                                           # Complexity parameter
+                                           cp = 0.001, # complex parameter
+                                           maxdepth = 5))# Max tree depth
+
+
+
+```
+
+```{r fig.align='center', fig.width=7, fig.height=7, fig.cap='The tree classification shows the first split at swallowing difficulty, indicating it was the most significant variable of the split. Overall, it shows that individuals with difficulty swallowing and allergy have a high chance of getting lung cancer. It also suggests that even without allergy, wheezing, alcohol consumption, and yellow fingers can raise probability of getting diagnosed with lung cancer.'}
+rpart.plot(tree.model, 
+           extra = 104, # check the help document for more information
+           # color palette is a sequential color scheme that blends green (G) to blue (Bu)
+           box.palette = "GnBu",  
+           branch.lty = 1, 
+           shadow.col = "gray", 
+           nn = TRUE)
+
+
+```
+
+```{r }
+# Print the complexity parameter table
+pander(tree.model$cptable)
+
+```
+
+The table above is a complexity parameter table from the decision tree above. At the beginning of the tree there are zero splits with a training error of 0, which is our baseline. As the tree grows there are more splits and a decreased relative error, suggesting a better fit on training data. Ideally, we want the smallest subtree where xerror is within 1 SE of the minimum xerror. The minimum xerror is 0.6786, shown in the last row. Using the 1 SE rule, our threshold would be the minimum xerror plus it's standard deviation which would be 0.8114. The first row to meet this rule is the third row which has 4 splits and a CP of 0.05357, because it's xerror is 0.7321 which is less than 0.8114.This means the tree should be pruned to 4 splits for model simplicity and accuracy.
+
+
+```{r fig.align='center', fig.width=7, fig.height=5, fig.cap='The plot above shows the corss-validarion error (rel error) vs the complexity parameter (cp) from the decision tree model. The horrizontal dashed line shows the minimum cross-validation error + 1SE. The 1-SE rule suggests choosing the simplest model within 1 standard error of the lowest cross-validation error. The dashed line crosses the error bar of the tree size 1, meaning this is the simplest model that will still perform adequately. Our optimal cp would be 0.0073, which is at 6 splits.'}
+# Plot the cross-validation results
+plotcp(tree.model)
+
+```
+
+## Pruning
+
+```{r fig.align='center', fig.width=7, fig.height=7, fig.cap='The above model shows the tree after pruning. This result is the same as our first model, since the optimal cp is as 6 splits.'}
+# Find the optimal cp value that minimizes cross-validated error
+min.cp <- tree.model$cptable[which.min(tree.model$cptable[,"xerror"]),"CP"]
+
+# Prune the tree using the optimal cp
+pruned.tree.1SE <- prune(tree.model, cp = 0.0073)  
+pruned.tree.min <- prune(tree.model, cp = min.cp)
+
+# Visualize the pruned tree
+rpart.plot(pruned.tree.1SE, 
+           extra = 104, # check the help document for more information
+           # color palette is a sequential color scheme that blends green (G) to blue (Bu)
+           box.palette = "GnBu",  
+           branch.lty = 1, 
+           shadow.col = "gray", 
+           nn = TRUE)
+
+```
+
+```{r fig.align='center', fig.width=7, fig.height=5, fig.cap='This is the final pruned tree based on the plot of cross-validation error vs CP. This shows that swallowing difficulty is significant alone in predicting lung cancer.'}
+# Visualize the pruned tree
+rpart.plot(pruned.tree.min, 
+           extra = 104, # check the help document for more information
+           # color palette is a sequential color scheme that blends green (G) to blue (Bu)
+           box.palette = "GnBu",  
+           branch.lty = 1, 
+           shadow.col = "gray", 
+           nn = TRUE)
+
+```
+
+```{r fig.align='center', fig.width=7, fig.height=5, fig.cap='The plot compares logistic regression and the pruned Tree models. Based on the AUC and ROC, logistic regression performs better than the other two models.'}
+# Make predictions on the test set
+test.data$LUNG_CANCER<- as.factor(test.data$LUNG_CANCER)
+train.data$LUNG_CANCER<- as.factor(train.data$LUNG_CANCER)
+
+pred.label.1SE <- predict(pruned.tree.1SE, test.data, type = "class") # default cutoff 0.5
+pred.prob.1SE <- predict(pruned.tree.1SE, test.data, type = "prob")[,2]
+##
+pred.label.min <- predict(pruned.tree.min, test.data, type = "class") # default cutoff 0.5
+pred.prob.min <- predict(pruned.tree.min, test.data, type = "prob")[,2]
+
+# Confusion matrix
+#conf.matrix <- confusionMatrix(pred.label, test.data$diabetes, positive = "pos")
+#print(conf.matrix)
+
+########################
+###  logistic regression
+logit.fit <- glm(LUNG_CANCER ~ ., data = train.data, family = binomial)
+AIC.logit <- step(logit.fit, direction = "both", trace = 0)
+pred.logit <- predict(AIC.logit, test.data, type = "response")
+
+# ROC curve and AUC
+roc.tree.1SE <- roc(test.data$LUNG_CANCER, pred.prob.1SE)
+roc.tree.min <- roc(test.data$LUNG_CANCER, pred.prob.min)
+roc.logit <- roc(test.data$LUNG_CANCER, pred.logit)
+
+##
+### Sen-Spe
+tree.1SE.sen <- roc.tree.1SE$sensitivities
+tree.1SE.spe <- roc.tree.1SE$specificities
+#
+tree.min.sen <- roc.tree.min$sensitivities
+tree.min.spe <- roc.tree.min$specificities
+#
+logit.sen <- roc.logit$sensitivities
+logit.spe <- roc.logit$specificities
+## AUC
+auc.tree.1SE <- roc.tree.1SE$auc
+auc.tree.min <- roc.tree.min$auc
+auc.logit <- roc.logit$auc
+###
+plot(1-logit.spe, logit.sen,  
+     xlab = "1 - specificity",
+     ylab = "sensitivity",
+     col = "darkred",
+     type = "l",
+     lty = 1,
+     lwd = 1,
+     main = "ROC: CART and Logistic Regression")
+lines(1-tree.1SE.spe, tree.1SE.sen, 
+      col = "blue",
+      lty = 1,
+      lwd = 1)
+lines(1-tree.min.spe, tree.min.sen,      
+      col = "orange",
+      lty = 1,
+      lwd = 1)
+abline(0,1, col = "skyblue3", lty = 2, lwd = 2)
+legend("bottomright", c("Logistic", "Tree 1SE", "Tree Min"),
+       lty = c(1,1,1), lwd = rep(1,3),
+       col = c("red", "blue", "orange"),
+       bty="n",cex = 0.8)
+## annotation - AUC
+text(0.8, 0.46, paste("Logistic AUC: ", round(auc.logit,4)), cex = 0.8)
+text(0.8, 0.4, paste("Tree 1SE AUC: ", round(auc.tree.1SE,4)), cex = 0.8)
+text(0.8, 0.34, paste("Tree Min AUC: ", round(auc.tree.min,4)), cex = 0.8)
+
+```
+
+## Optimal Cutoff
+
+```{r fig.align='center', fig.width=7, fig.height=5, fig.cap='The above plot shows the optimal cutoff to be 0.3889. This threshold is used to minimize missclassification.'}
+# preditive probabilities of tree.min model.
+pred.prob.min <- predict(pruned.tree.min, train.data, type = "prob")[,2]
+##
+cost <- NULL
+cutoff <-seq(0,1, length = 10)
+##
+for (i in 1:10){
+  pred.label <- ifelse(pred.prob.min > cutoff[i], "YES", "NO")
+  FN <- sum(pred.label == "NO" & train.data$LUNG_CANCER == "YES")
+  FP <- sum(pred.label == "YES" & train.data$LUNG_CANCER == "NO")
+  cost[i] = 5*FP + 20*FN
+}
+## identify optimal cut-off
+min.ID <- which(cost == min(cost))   # could have multiple minimum
+optim.prob <- mean(cutoff[min.ID])   # take the average of the cut-offs
+##
+plot(cutoff, cost, type = "b", col = "navy",
+     main = "Cutoff vs Misclassification Cost")
+##
+text(0.2, 3500, paste("Optimal cutoff:", round(optim.prob,4)), cex = 0.8)
+
+```
+
+## Conclusion
+
+The logistic regression model performs superior to the suggested CART Classification models. However, the CART models showed that difficulty breathing was a key predictor in lung cancer. Other key predictors were alcohol consumption, wheezing, and allergy. 
